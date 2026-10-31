@@ -28,8 +28,8 @@ For each case, read `grades/<pid>.json` and the student's `extracted/<pid>/` fil
    then fix clear over- or under-grading.
 
 Edit the JSON in place: set `"reviewed_by": "sonnet"`, update `items`/`ai`/`ta_notes`/
-`feedback_ar` as needed (if you change the facts, rewrite `feedback_ar` in the same friendly,
-encouraging Palestinian colloquial Arabic the workers use, with English technical terms), set `needs_review` false unless the TA personally must decide
+`feedback_ar` as needed (if you change the facts, rewrite `feedback_ar` in the same short (1–2 sentences), cheerful,
+encouraging Palestinian colloquial Arabic the workers use, with technical terms in English, never translated), set `needs_review` false unless the TA personally must decide
 (then explain why in `ta_notes`). Grades are never reduced for AI or copying suspicion.
 
 Reply with one line per case: `<pid> <what changed or "confirmed">`.

@@ -45,13 +45,18 @@ For each student, the files are in `{WORK_DIR}/extracted/<pid>/`:
    empty, set `too_bad_candidate: true` with the reason (a Sonnet reviewer decides).
 6. Note anything odd in `ta_notes` (wrong assignment file, unreadable screenshots, different
    host between tasks, a file that looks like another lab).
-7. Write 2–4 lines of feedback in **Palestinian colloquial Arabic (عامية فلسطينية)**, talking
-   to the student like a friendly TA: open with real, specific praise and encouragement
-   (يعطيك العافية، شغل حلو، برافو عليك...), then what lost points and how to fix it next time
-   (بس انتبه إنو...، المرة الجاية حاول...), and end with a cheer-up line, warmer still for
-   low grades (ولا يهمك، الجاية أحسن إن شاء الله 💪). Technical terms (Nmap, -sT, connect_ex,
-   return code) stay in English. Specific, never generic. No mention of AI or copying
-   suspicion in the feedback; that goes in the flags only.
+7. Write **short** feedback (1–2 sentences, max ~30 words) in **Palestinian colloquial Arabic
+   (عامية فلسطينية)**, like a friendly TA cheering the student on: one real, specific praise,
+   at most one small tip for next time, and a warm cheer-up ending. Light and positive, never
+   a list of mistakes (the points breakdown already shows those).
+   **Technical terms stay in English, never translated**: register, EDX, trace, debugger,
+   breakpoint, screenshot, code, 16-bit, Nmap, port, return code... (write "الـ trace",
+   not "التتبع"; "screenshot", not "لقطة شاشة"; "register", not "المسجل").
+   **Every student gets different wording**: vary the opening, the praise and the ending, and
+   never reuse the same closing line within your batch. Use the TA's style, words like these
+   (mix them, don't copy the same ones every time): ما شاء الله، مجهود مبارك، مبدع، بالتوفيق،
+   شد الهمة، يعطيك العافية، تسلم إيدك، كمّل هيك، إنت قدها، الله يوفقك، للأمام دايماً 🌟.
+   No mention of AI or copying suspicion; that goes in the flags only.
 
 Do not compute the final total or the /10 grade; a script does that.
 
