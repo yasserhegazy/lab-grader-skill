@@ -140,6 +140,13 @@ def main():
 
     item_ids = [it["id"] for it in rubric["items"]]
     max_total = rubric.get("max_total", 110)
+    # Moodle's maximum grade is the TA's answer, never assumed: grades are capped to it.
+    moodle_max = rubric.get("moodle_max_grade")
+    if moodle_max is None:
+        print("WARNING: rubric has no moodle_max_grade. Ask the TA what maximum grade Moodle allows "
+              "for this assignment (e.g. 10 or 11) and add it to rubric.json.")
+    else:
+        max_total = min(max_total, 10 * float(moodle_max))
     maxes = {it["id"]: it["max"] for it in rubric["items"]}
     gids = {d["id"] for d in rubric.get("global_deductions", [])}
     curve = rubric.get("curve", {"method": "stretch", "min_grade_10": 6, "max_grade_10": 10})
@@ -235,7 +242,7 @@ def main():
     # the same number Moodle puts in the downloaded folder names.
     by_pid = {r["participant_id"]: r for r in rows}
     scale = lambda r: r["grade_10"] if a.moodle_scale == 10 else round(r["total_100"], 2)
-    over_max = [r for r in rows if r["grade_10"] > 10]
+    over_max = [r for r in rows if r["grade_10"] > (float(moodle_max) if moodle_max is not None else 10)]
     out = os.path.join(W, "moodle_import.csv")
     if a.moodle_worksheet:
         with open(a.moodle_worksheet, encoding="utf-8-sig") as fh:
@@ -264,7 +271,7 @@ def main():
         print(f"Curve: {curve.get('method')} | anchor = genuine attempt #{rank} from the bottom, rubric {lo:.1f} -> {c_lo/10:.1f}/10, 100 -> {c_hi/10:.1f}/10")
     print("Distribution (/10): " + ", ".join(f"{k}: {v}" for k, v in sorted(dist.items())))
     if over_max:
-        print(f"{len(over_max)} students above 10/10: raise the Moodle max grade or enable unlimitedgrades.")
+        print(f"{len(over_max)} students above the Moodle maximum ({moodle_max or 10}): check moodle_max_grade with the TA.")
     for p_ in problems:
         print(p_)
     for r in rows:

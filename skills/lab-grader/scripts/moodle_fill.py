@@ -11,6 +11,8 @@ DevTools console. It:
     full name when the report had no id),
   - fills the grade box and the "Feedback comments" box, firing input/change events,
   - never clicks Save: the TA checks the page and saves,
+  - reads the maximum Moodle prints next to each grade box ("/ 11"), skips any grade above it,
+    and reports when it differs from the rubric's moodle_max_grade,
   - returns a report: filled, not found on the page, page rows with no grade, grades above
     the Moodle maximum (skipped), and Moodle's own "late" text per filled student so it can be
     compared with the late penalty in grades.csv.
@@ -28,7 +30,7 @@ JS = r"""
   const byId = {}, byName = {};
   for (const d of DATA) { if (d.sid) byId[d.sid] = d; byName[norm(d.name)] = d; }
   const rows = [...document.querySelectorAll("table tbody tr")];
-  const report = {filled: [], skipped_over_max: [], page_rows_without_grade: [], late_on_moodle: []};
+  const report = {expected_max: MAX, page_max_mismatch: [], filled: [], skipped_over_max: [], page_rows_without_grade: [], late_on_moodle: []};
   const used = new Set();
   const set = (el, v) => {
     const proto = el.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
@@ -50,7 +52,13 @@ JS = r"""
     const label = cells.find(c => /^\d{7,10}$/.test(c)) || norm((tr.querySelector("a") || {}).innerText);
     if (!d) { report.page_rows_without_grade.push(label); continue; }
     used.add(d.pid);
-    if (MAX && d.grade > MAX) { report.skipped_over_max.push(`${d.sid || d.name}: ${d.grade}`); continue; }
+    // Moodle prints "/ 11" next to the grade box: that is the real maximum for this assignment.
+    const m = norm((grade.closest("td") || tr).innerText).match(/\/\s*(\d+(?:\.\d+)?)/);
+    const pageMax = m ? parseFloat(m[1]) : null;
+    if (pageMax !== null && MAX !== null && pageMax !== MAX && report.page_max_mismatch.length < 1)
+      report.page_max_mismatch.push(`page says / ${pageMax}, rubric says ${MAX}: ask the TA before saving`);
+    const limit = Math.min(...[MAX, pageMax].filter(x => x !== null));
+    if (d.grade > limit) { report.skipped_over_max.push(`${d.sid || d.name}: ${d.grade} > ${limit}`); continue; }
     set(grade, String(d.grade));
     if (fb) set(fb, d.feedback);
     report.filled.push(`${d.sid || d.name}: ${d.grade}`);
@@ -67,9 +75,16 @@ JS = r"""
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("work_dir")
-    ap.add_argument("--max-grade", type=float, default=None, help="Moodle's maximum grade (e.g. 11); higher grades are skipped")
+    ap.add_argument("--max-grade", type=float, default=None,
+                    help="Moodle's maximum grade; default: rubric moodle_max_grade (asked from the TA)")
     ap.add_argument("--only", nargs="*", help="participant ids to fill (default: everyone)")
     a = ap.parse_args()
+    if a.max_grade is None:
+        rubric = json.load(open(os.path.join(a.work_dir, "rubric.json")))
+        a.max_grade = rubric.get("moodle_max_grade")
+        if a.max_grade is None:
+            raise SystemExit("No Moodle maximum grade: ask the TA, add moodle_max_grade to rubric.json "
+                             "(or pass --max-grade), then re-run merge.py and this script.")
     rows = list(csv.DictReader(open(os.path.join(a.work_dir, "grades.csv"), encoding="utf-8-sig")))
     if a.only:
         rows = [r for r in rows if r["participant_id"] in a.only]

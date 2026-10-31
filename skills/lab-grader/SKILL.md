@@ -67,7 +67,8 @@ Read `references/rubric-guide.md`, then read the assignment fully. Write `$WORK/
 and `$WORK/rubric.md` following the TA's fixed policy in that guide (80 work by difficulty /
 20 format / bonus up to +10 / checklist deductions from the assignment's own rules / curve
 6–10 / too-bad rule / AI penalty / late penalty / `lab_allowlist` / round up to 0.5). Ask the TA
-for the **due date** and **Moodle's maximum grade** (both go in the rubric). Show the TA the rubric as a compact table and **stop for approval**. Grades built on
+for the **due date** and **Moodle's maximum grade** (`deadline`, `moodle_max_grade`); never assume
+the maximum: it differs between assignments. Show the TA the rubric as a compact table and **stop for approval**. Grades built on
 an unapproved rubric are wasted tokens. If `rubric.json` already exists and was approved
 earlier, reuse it.
 
@@ -162,14 +163,16 @@ Never fill Moodle on your own initiative. When the TA asks to put the grades in 
 1. Ask the TA to confirm that the grades are **approved** (final), to open the assignment's
    **Submissions** page with **Quick grading** on and **all students on one page** (bottom of
    the page: "Assignments per page" → All), and to send you the page link.
-2. Build the script: `python3 SKILL_DIR/scripts/moodle_fill.py "$WORK" --max-grade <Moodle max, e.g. 11>`
+2. Build the script: `python3 SKILL_DIR/scripts/moodle_fill.py "$WORK"` (uses the rubric's
+   `moodle_max_grade`; if it's missing, ask the TA, add it, re-run `merge.py`)
    (→ `$WORK/moodle_fill.js`). It matches rows by the university **User ID** (by name when the
    report had no id), fills the grade and "Feedback comments" boxes, and **never clicks Save**.
 3. With browser tools (Claude in Chrome): open the TA's link in a new tab, check it's the right
    assignment, run the contents of `moodle_fill.js` with the JavaScript tool, and read the report it
    returns. Without browser tools: tell the TA to paste the file into the DevTools console (F12).
 4. Tell the TA: how many were filled, students not found on the page (or page rows with no grade),
-   and any mismatch between Moodle's "late" text and our late penalty. The TA reviews the page
+   any mismatch between Moodle's "late" text and our late penalty, and **if the page's maximum
+   ("/ N") differs from `moodle_max_grade`**: then stop, ask the TA, fix the rubric, re-merge and refill. The TA reviews the page
    and clicks **Save all quick grading changes** themselves.
 
 ## Re-runs and fixes
