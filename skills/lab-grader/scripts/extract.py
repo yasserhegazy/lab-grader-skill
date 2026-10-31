@@ -18,6 +18,7 @@ import hashlib
 import io
 import json
 import os
+import time
 import re
 import shutil
 import subprocess
@@ -180,7 +181,13 @@ def process(args):
     all_files = []
     for dp, _, fns in os.walk(src):
         for fn in sorted(fns):
+            if fn.startswith((".~lock", "~$", ".")):  # editor lock / hidden files, not part of the submission
+                continue
             all_files.append(os.path.join(dp, fn))
+    # Moodle's zip keeps each file's upload time as its mtime: the latest one is the submission time
+    # (merge.py compares it with rubric "deadline" for the late penalty).
+    submitted_at = (time.strftime("%Y-%m-%dT%H:%M", time.localtime(max(os.path.getmtime(f) for f in all_files)))
+                    if all_files else "")
 
     # unpack archives into the work dir (never execute anything from them)
     for f in list(all_files):
@@ -252,7 +259,7 @@ def process(args):
     if len(images) >= max_images:
         flags.append(f"IMAGES_TRUNCATED:{max_images} (later screenshots not extracted: re-run with a higher --max-images or render the remaining pages)")
 
-    row = {"participant_id": pid, "name": name, "folder": folder, "files": files,
+    row = {"participant_id": pid, "name": name, "folder": folder, "files": files, "submitted_at": submitted_at,
            "pages": sum((m_.get("pages") or 0) for m_ in metas), "text_chars": len(text),
            "n_images": len(images), "ocr": HAS_TESSERACT, "flags": flags}
     with open(os.path.join(out, "meta.json"), "w") as fh:

@@ -20,7 +20,10 @@ Scoring (the script computes this; agents never do the final arithmetic):
                  a full 100 stays 100, linear in between. Students marked too_bad keep raw_100
                  (they are the only ones who can end below 5) and don't set the anchor.
     total_100  = curved_100 + bonus - ai_penalty (AI level "high" AND proven) + ta_adjustment.points
-                 clamped to [0, rubric.max_total]
+                 clamped to [0, rubric.max_total], then minus the late penalty:
+                 rubric "deadline" (local time, e.g. "2026-10-24T00:00") vs manifest submitted_at
+                 (upload time kept in the Moodle zip); rubric "late_penalty" default
+                 [{"max_hours": 24, "points": 10}, {"max_hours": null, "points": 20}] = -1 / -2 grades
     grade_10   = total_100 / 10 rounded UP to the next 0.5   (87 -> 9.0, 81 -> 8.5, 80 -> 8.0)
                  ta_adjustment.target_grade_10, if set, replaces it (TA's final word).
 """
@@ -30,6 +33,7 @@ import json
 import math
 import os
 import re
+from datetime import datetime
 
 # University student number. Default fits IUG-style 9-digit ids (120230289); set
 # rubric "student_id_regex" for other formats. Looked up in file names, then the report
@@ -87,6 +91,24 @@ def derive_check(g, row, copy_pairs_real):
     if row["ai_ask_student"] and labels and labels != ["Check grade"]:
         todo.append("Ask: " + short(row["ai_ask_student"], 160))
     return (" + ".join(labels) or "OK"), " ".join(t for t in todo if t)
+
+
+def late_penalty(rubric, submitted_at):
+    """(hours_late, points) for a submission; (0, 0) when on time or no deadline is set."""
+    dl = rubric.get("deadline")
+    if not dl or not submitted_at:
+        return 0.0, 0.0
+    hours = (datetime.fromisoformat(submitted_at) - datetime.fromisoformat(dl)).total_seconds() / 3600
+    if hours <= 0:
+        return 0.0, 0.0
+    for step in rubric.get("late_penalty", [{"max_hours": 24, "points": 10}, {"max_hours": None, "points": 20}]):
+        if step.get("max_hours") is None or hours <= step["max_hours"]:
+            return hours, float(step["points"])
+    return hours, 0.0
+
+
+def late_text(hours):
+    return f"{hours:.0f} hours" if hours < 48 else f"{hours / 24:.1f} days"
 
 
 def severity(check):
@@ -170,13 +192,15 @@ def main():
         ai_pen = ai_pen_pts if ai.get("level") == "high" and ai.get("proven") else 0.0
         adj = g.get("ta_adjustment", {})
         total = max(0.0, min(max_total, curved + bonus - ai_pen + float(adj.get("points", 0))))
+        late_h, late_pen = late_penalty(rubric, man[pid].get("submitted_at", ""))
+        total = max(0.0, total - late_pen)
         grade = float(adj["target_grade_10"]) if "target_grade_10" in adj else ceil_half(total / 10)
         sid = find_student_id(W, pid, man[pid].get("files", []), id_re)
         row = {
             "participant_id": pid, "student_id": sid, "name": man[pid]["name"], "grade_10": grade,
             "Check": "", "What to do": "", "feedback_ar": g.get("feedback_ar", ""),
             **{k: awarded.get(k, 0) for k in item_ids},
-            "format": fmt, "bonus": bonus, "deductions": ded, "ai_penalty": ai_pen,
+            "format": fmt, "bonus": bonus, "deductions": ded, "ai_penalty": ai_pen, "late_penalty": late_pen,
             "raw_100": round(raw, 2), "curved_100": round(curved, 2), "total_100": round(total, 2),
         }
         # fields used only to build Check / What to do (not written to the CSV)
@@ -188,6 +212,13 @@ def main():
             row["Check"], row["What to do"] = tc["check"], tc.get("what_to_do", "")
         else:
             row["Check"], row["What to do"] = derive_check(g, {**row, **info}, copy_of.get(pid, []))
+        if late_pen:
+            row["Check"] = (f"Late (-{late_pen / 10:g})" if row["Check"] == "OK"
+                            else f"{row['Check']} + Late (-{late_pen / 10:g})")
+            row["What to do"] = (f"Submitted {late_text(late_h)} late ({man[pid]['submitted_at'].replace('T', ' ')}), "
+                                 f"-{late_pen / 10:g} applied. " + row["What to do"]).strip()
+            row["feedback_ar"] = (row["feedback_ar"].rstrip() +
+                                  f" (ملاحظة: انخصم {'علامة' if late_pen <= 10 else 'علامتين'} بسبب التسليم المتأخر)")
         if adj:
             row["What to do"] = (row["What to do"] + f" Grade adjusted by TA: {adj.get('reason', '')}").strip()
         if not sid:

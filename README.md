@@ -18,7 +18,8 @@ download, or any folder with one sub-folder per student) and the assignment file
 Grading policy (editable in the rubric): 80 points of work split by task difficulty, 20 points
 of format, up to +10 bonus for an exceptional report (max 11/10). Grades are curved to spread
 **6–10**; only "too bad" submissions (wrong file, most tasks missing, invented results, empty)
-go below 5. Final grade rounds **up** to the next 0.5. Proven AI use costs 1 point; every
+go below 5. Late work loses 1 grade (up to a day late) or 2 (more), read from the upload
+times in the Moodle download. Final grade rounds **up** to the next 0.5. Proven AI use costs 1 point; every
 other suspicion is a note for you, never an automatic deduction.
 
 ## Why it's cheap
@@ -104,7 +105,11 @@ The skill walks you through it:
 4. **Full run**: parallel grading of everyone
 5. **Review**: flagged and spot-check cases re-checked by the stronger model
 6. **AI & integrity review**: notes with evidence, "too bad" decisions, proven-AI penalty
-7. **Merge**: curve, bonus and the CSVs in `<assignment folder>/grading/`
+7. **Merge**: curve, bonus, late penalty and the CSVs in `<assignment folder>/grading/`
+8. **Fill Moodle** (only when you ask): open the Submissions page with Quick grading on and
+   all students on one page, send the link and confirm the grades are final. The agent fills
+   every grade and comment by university ID through Claude in Chrome (or gives you a script to
+   paste in the console). It never clicks Save: you check the page and save.
 
 Changing one student afterwards: *"give student 1234567 a 7"*. The skill records it as a TA
 override and re-merges.
@@ -114,7 +119,8 @@ override and re-merges.
 | File | What it is |
 |---|---|
 | `grades.csv` | simple, one row per student, students to check first: participant id, **university id**, name, grade /10, **Check** (`OK`, `Copy with …`, `Maybe AI`, `Too bad`…), **What to do** (plain English: what was found, where, what to ask), feedback, item points, format, bonus, deductions, raw → curved → total (opens correctly in Excel). Detailed notes stay in `grades/<pid>.json` |
-| `moodle_import.csv` | upload via *Assignment → Grading action → Upload grading worksheet* (pass Moodle's own worksheet with `--moodle-worksheet` for an exact match) |
+| `moodle_fill.js` | made by `scripts/moodle_fill.py` when you ask to fill Moodle: fills the quick-grading page by university ID, never saves |
+| `moodle_import.csv` | if your Moodle has it, upload via *Assignment → Grading action → Upload grading worksheet* (pass Moodle's own worksheet with `--moodle-worksheet` for an exact match) |
 | `rubric.json` / `rubric.md` | the approved rubric (reused on re-runs) |
 | `similarity.md`, `ai_scan.json` | raw copy-check and AI-signal results |
 
@@ -144,7 +150,8 @@ skills/lab-grader/
     ├── ai_scan.py              free AI / fabrication / beyond-the-lab scan
     ├── plan.py                 balanced batches, review and AI case lists
     ├── codex_agents.py         parallel `codex exec` launcher (Codex harness)
-    └── merge.py                curve, bonus, penalties → grades.csv + Moodle CSV
+    ├── merge.py                curve, bonus, penalties → grades.csv + Moodle CSV
+    └── moodle_fill.py          browser script that fills Moodle's quick-grading page
 ```
 
 ## License

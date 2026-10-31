@@ -24,6 +24,11 @@ any student is graded. Cheap agents then apply it mechanically.
   rubric score and are left out of the curve.
 - **AI with proof costs points**: AI level `high` *and* `proven` takes `ai_penalty_high_proven`
   (default 10 points = 1 grade point) off the final. Everything else about AI is a note only.
+- **Late submission**: `-1` grade (10 points) if up to 24 hours late, `-2` (20 points) if later,
+  taken off the final grade. Ask the TA for the exact due date (Moodle: assignment page, "Due")
+  and put it in `deadline`. Upload times come from the Moodle zip (file times), so no Moodle access is needed.
+- **Maximum = Moodle's maximum grade** (usually 11/10): ask the TA what Moodle allows and set
+  `max_total` to match (110 = 11/10), so no grade is above what Moodle accepts.
 - **Final grade /10 = total/10 rounded UP to the next 0.5** (done by `merge.py`, not by agents).
 - **Be kind.** Partial work earns partial credit. A missing screenshot but clear text output
   loses part of the evidence points, not the whole task. A wrong explanation loses the
@@ -83,6 +88,9 @@ any student is graded. Cheap agents then apply it mechanically.
   "ai_signals_specific": ["Reports example host 192.168.56.20 but no screenshot shows it"],
   "curve": {"method": "stretch", "min_grade_10": 6, "max_grade_10": 10},
   "ai_penalty_high_proven": 10,
+  "deadline": "2026-10-24T00:00",
+  "late_penalty": [{"max_hours": 24, "points": 10}, {"max_hours": null, "points": 20}],
+  "student_id_regex": "(?<!\\d)(1\\d{8})(?!\\d)",
   "lab_allowlist": ["settimeout"],
   "kindness_notes": ["192.168.56.x and 10.0.2.x are VirtualBox defaults: never suspicious by themselves"]
 }
