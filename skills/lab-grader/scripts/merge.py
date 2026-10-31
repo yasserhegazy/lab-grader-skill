@@ -35,7 +35,7 @@ import os
 import re
 from datetime import datetime
 
-# University student number. Default fits IUG-style 9-digit ids (120230289); set
+# University student number. Default fits IUG-style 9-digit ids (120201234); set
 # rubric "student_id_regex" for other formats. Looked up in file names, then the report
 # text, then the OCR; a number written after "ID" / "رقم" is accepted as a fallback.
 DEFAULT_ID_RE = r"(?<!\d)(1\d{8})(?!\d)"
