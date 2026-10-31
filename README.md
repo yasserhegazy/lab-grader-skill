@@ -113,7 +113,7 @@ override and re-merges.
 
 | File | What it is |
 |---|---|
-| `grades.csv` | one row per student, students to check first. Simple columns first: grade /10, **Check** (`OK`, `Copy with …`, `Maybe AI`, `Too bad`…), **What to do** (plain English: what was found, where, what to ask), feedback. Then every rubric item, raw → curved → bonus → AI penalty, and the detailed notes (opens correctly in Excel) |
+| `grades.csv` | simple, one row per student, students to check first: participant id, **university id**, name, grade /10, **Check** (`OK`, `Copy with …`, `Maybe AI`, `Too bad`…), **What to do** (plain English: what was found, where, what to ask), feedback, item points, format, bonus, deductions, raw → curved → total (opens correctly in Excel). Detailed notes stay in `grades/<pid>.json` |
 | `moodle_import.csv` | upload via *Assignment → Grading action → Upload grading worksheet* (pass Moodle's own worksheet with `--moodle-worksheet` for an exact match) |
 | `rubric.json` / `rubric.md` | the approved rubric (reused on re-runs) |
 | `similarity.md`, `ai_scan.json` | raw copy-check and AI-signal results |

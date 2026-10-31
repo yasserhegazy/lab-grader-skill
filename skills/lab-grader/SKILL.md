@@ -142,8 +142,13 @@ pass it so the import file matches Moodle exactly. Otherwise a minimal
 students at their raw score, adds the bonus, subtracts the AI penalty for `high`+`proven`, and
 honours TA overrides. `grades.csv` shows every step (`raw_100`, `curved_100`, `ai_penalty`, ...).
 
-`grades.csv` starts with the simple columns (grade, `Check`, `What to do`, feedback) with
-flagged students at the top; the technical columns follow. There is no separate flags file.
+`grades.csv` is kept simple on purpose (the TA asked for it): participant id, university id,
+name, grade, `Check`, `What to do`, feedback, the item points, format, bonus, deductions, AI
+penalty and the raw/curved/total score. Flagged students come first. AI notes, copy details and
+reviewer notes stay in `grades/<pid>.json` and reach the TA only through `Check` / `What to do`;
+don't add more columns back. The university id is read from the file name, report text or OCR
+(rubric `student_id_regex` for non-IUG formats); a missing one is noted in `What to do`.
+There is no separate flags file.
 
 Tell the TA: where `grades.csv` and `moodle_import.csv` are; the grade distribution;
 how many AI/copy flags and the top ones in one line each; and any students above 10/10 (Moodle

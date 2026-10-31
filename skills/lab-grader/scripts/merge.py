@@ -6,8 +6,8 @@ Usage:
 
 Reads  <work_dir>/rubric.json, <work_dir>/grades/<pid>.json, manifest.json, similarity.json
 Writes <work_dir>/grades.csv          (UTF-8 with BOM so Excel shows Arabic correctly)
-                                      simple columns first: grade, "Check", "What to do", feedback;
-                                      flagged students at the top; technical columns at the end
+                                      participant id, university id, name, grade, "Check", "What to do",
+                                      feedback, item points, then the score steps; flagged students first
        <work_dir>/moodle_import.csv   (fills the Moodle worksheet if given, else a minimal one)
 
 "Check" / "What to do" come from grades/<pid>.json "ta_check" {"check", "what_to_do"} (written
@@ -29,6 +29,32 @@ import csv
 import json
 import math
 import os
+import re
+
+# University student number. Default fits IUG-style 9-digit ids (120230289); set
+# rubric "student_id_regex" for other formats. Looked up in file names, then the report
+# text, then the OCR; a number written after "ID" / "رقم" is accepted as a fallback.
+DEFAULT_ID_RE = r"(?<!\d)(1\d{8})(?!\d)"
+LABEL_ID_RE = re.compile(r"(?:\bID|\bNo\.?|رقم[^\d\n]{0,15})\s*[:#]?\s*(\d{7,10})\b", re.I)
+
+
+def find_student_id(W, pid, files, id_re):
+    base = os.path.join(W, "extracted", pid)
+    def read(name, n):
+        try:
+            return open(os.path.join(base, name), encoding="utf-8", errors="replace").read()[:n]
+        except OSError:
+            return ""
+    sources = [" ".join(files), read("text.txt", 6000), read("ocr.txt", 6000)]
+    for src in sources:
+        m = id_re.search(src)
+        if m:
+            return m.group(1)
+    for src in sources[1:]:
+        m = LABEL_ID_RE.search(src)
+        if m:
+            return m.group(1)
+    return ""
 
 
 def ceil_half(x):
@@ -98,6 +124,7 @@ def main():
     ai_pen_pts = float(rubric.get("ai_penalty_high_proven", 10))
     ai_scan_path = os.path.join(W, "ai_scan.json")
     ai_scan = json.load(open(ai_scan_path)) if os.path.exists(ai_scan_path) else {}
+    id_re = re.compile(rubric.get("student_id_regex", DEFAULT_ID_RE))
     rows, problems, G = [], [], {}
 
     # pass 1: pure rubric score per student
@@ -144,28 +171,27 @@ def main():
         adj = g.get("ta_adjustment", {})
         total = max(0.0, min(max_total, curved + bonus - ai_pen + float(adj.get("points", 0))))
         grade = float(adj["target_grade_10"]) if "target_grade_10" in adj else ceil_half(total / 10)
+        sid = find_student_id(W, pid, man[pid].get("files", []), id_re)
         row = {
-            "participant_id": pid, "name": man[pid]["name"], "grade_10": grade,
+            "participant_id": pid, "student_id": sid, "name": man[pid]["name"], "grade_10": grade,
             "Check": "", "What to do": "", "feedback_ar": g.get("feedback_ar", ""),
             **{k: awarded.get(k, 0) for k in item_ids},
-            "format": fmt, "deductions": ded, "raw_100": round(raw, 2), "too_bad": g.get("too_bad", {}).get("reason", "") if too_bad else "",
-            "curved_100": round(curved, 2), "bonus": bonus, "ai_penalty": ai_pen,
-            "ta_adjustment": adj.get("target_grade_10", adj.get("points", "")), "ta_adjustment_reason": adj.get("reason", ""),
-            "total_100": round(total, 2),
-            "ai_level": ai.get("level", "none"), "ai_proven": bool(ai.get("proven")),
-            "ai_scan_score": ai_scan.get(pid, {}).get("score", ""),
-            "ai_note": ai.get("note_for_ta", " | ".join(ai.get("signals", []))),
-            "ai_ask_student": ai.get("ask_student", ""),
-            "copy_pairs": ", ".join(copy_of.get(pid, [])),
-            "auto_flags": " | ".join(man[pid]["flags"]),
-            "reviewed_by": g.get("reviewed_by", "worker"), "confidence": g.get("confidence", ""),
-            "ta_notes": g.get("ta_notes", ""),
+            "format": fmt, "bonus": bonus, "deductions": ded, "ai_penalty": ai_pen,
+            "raw_100": round(raw, 2), "curved_100": round(curved, 2), "total_100": round(total, 2),
         }
+        # fields used only to build Check / What to do (not written to the CSV)
+        info = {"too_bad": g.get("too_bad", {}).get("reason", "") if too_bad else "",
+                "ai_level": ai.get("level", "none"), "ai_ask_student": ai.get("ask_student", ""),
+                "confidence": g.get("confidence", "")}
         tc = g.get("ta_check") or {}
         if tc.get("check"):
             row["Check"], row["What to do"] = tc["check"], tc.get("what_to_do", "")
         else:
-            row["Check"], row["What to do"] = derive_check(g, row, copy_of.get(pid, []))
+            row["Check"], row["What to do"] = derive_check(g, {**row, **info}, copy_of.get(pid, []))
+        if adj:
+            row["What to do"] = (row["What to do"] + f" Grade adjusted by TA: {adj.get('reason', '')}").strip()
+        if not sid:
+            row["What to do"] = (row["What to do"] + " No university ID found in the report.").strip()
         rows.append(row)
     rows.sort(key=lambda r: (severity(r["Check"]), r["participant_id"]))
 
