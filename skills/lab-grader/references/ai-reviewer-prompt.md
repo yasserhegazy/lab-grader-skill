@@ -70,7 +70,7 @@ rubric deduction was clearly missed or wrongly applied (then say so in `ta_notes
   "ask_student": "one or two concrete questions that a student who did the work can answer easily, e.g. 'Show me port_check.py running on your VM' or 'Why did you use errno.errorcode, and what does it return for 111?'"
 },
 "too_bad": {"is": false, "reason": ""},
-"ta_check": {"check": "Copy with 4813828", "what_to_do": "Same screenshots and same typo as 4813828. Ask both to run Exercise 2 in front of you."},
+"ta_check": {"check": "Copy with 1234568", "what_to_do": "Same screenshots and same typo as 1234568. Ask both to run Exercise 2 in front of you."},
 "reviewed_by": "sonnet"
 ```
 
