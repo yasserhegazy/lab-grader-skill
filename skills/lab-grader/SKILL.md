@@ -166,6 +166,10 @@ needs the max raised or `unlimitedgrades` for those). Keep it short. The files h
   the assignment's example IPs with screenshots showing another network, or printed code that
   doesn't match the program that ran. Script-generated metadata (python-docx/reportlab) is a
   strong pointer, not proof.
+- Step-by-step trace assignments (assembly, debugger) can have 50+ screenshots. The extractor
+  keeps up to `--max-images` (default 150) and flags `IMAGES_TRUNCATED` when it hits the cap;
+  re-extract those students with a higher cap before grading, or the last pages (often the
+  bonus) are silently missed.
 - Check for **wrong-file submissions** (another lab's report, template left unedited): flag
   for the TA to contact the student rather than auto-zero.
 - Copy-check false positives come from logos, stock cover images, PDF alpha masks and

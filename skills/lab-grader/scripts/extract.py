@@ -4,7 +4,7 @@
 Zero Claude tokens: everything here is local (PyMuPDF, zipfile, Pillow, tesseract).
 
 Usage:
-    python3 extract.py <submissions_dir> <work_dir> [--max-images 40] [--jobs 8]
+    python3 extract.py <submissions_dir> <work_dir> [--max-images 150] [--jobs 8]
 
 Produces, for each student, <work_dir>/extracted/<participant_id>/:
     text.txt     document text, split by "===== page N ====="
@@ -249,6 +249,8 @@ def process(args):
         flags.append("LITTLE_TEXT (text mostly inside images or submission nearly empty)")
     if not images:
         flags.append("NO_SCREENSHOTS")
+    if len(images) >= max_images:
+        flags.append(f"IMAGES_TRUNCATED:{max_images} (later screenshots not extracted: re-run with a higher --max-images or render the remaining pages)")
 
     row = {"participant_id": pid, "name": name, "folder": folder, "files": files,
            "pages": sum((m_.get("pages") or 0) for m_ in metas), "text_chars": len(text),
@@ -262,7 +264,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("submissions_dir")
     ap.add_argument("work_dir")
-    ap.add_argument("--max-images", type=int, default=40)
+    ap.add_argument("--max-images", type=int, default=150)
     ap.add_argument("--jobs", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     ap.add_argument("--only", nargs="*", help="participant ids to (re)process")
     a = ap.parse_args()

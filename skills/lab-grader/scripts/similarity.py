@@ -76,8 +76,19 @@ def jac(a, b):
     return len(a & b) / len(a | b) if a and b else 0.0
 
 
+# Captions that just name an instruction and a register value ("mov eax, 6 executed -> EAX =
+# 00000006") are near-identical for every honest student, so they don't count as paraphrase.
+CODEY = re.compile(r"\b(e?[abcd]x|[abcd][lh]|e?[sd]i|e?[sb]p|eip|0x[0-9a-f]+|[0-9a-f]{4,8}h?|\d+(\.\d+){3}|"
+                   r"port \d+|connect_ex|nmap|mov|add|sub)\b", re.I)
+
+
 def sentences(t):
-    return [re.sub(r"\s+", " ", x.strip().lower()) for x in re.split(r"(?<=[.!?])\s+|\n", t) if len(x.split()) >= 7]
+    out = []
+    for x in re.split(r"(?<=[.!?])\s+|\n", t):
+        w = x.split()
+        if len(w) >= 7 and len(CODEY.findall(x)) / len(w) < 0.25:
+            out.append(re.sub(r"\s+", " ", x.strip().lower()))
+    return out
 
 
 def grams4(s):

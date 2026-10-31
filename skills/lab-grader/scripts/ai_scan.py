@@ -38,6 +38,20 @@ IP = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 CALL = re.compile(r"\b[A-Za-z_]\w*\.([A-Za-z_]\w*)\s*\(")
 IMPORT = re.compile(r"^\s*(?:from\s+([\w.]+)\s+import|import\s+([\w.]+))", re.M)
 NMAP_FLAG = re.compile(r"\bnmap\b[^\n]*?((?:\s--?[A-Za-z][\w-]*)+)")
+# Assembly (x86/MASM) labs: instructions, directives and library routines.
+ASM_WORDS = re.compile(r"(?<![\w.])(mov|movzx|movsx|add|adc|sub|sbb|inc|dec|neg|xchg|lea|mul|imul|div|idiv|cmp|"
+                       r"test|jmp|je|jne|jz|jnz|jg|jge|jl|jle|ja|jb|loop|call|ret|push|pop|pushad|popad|and|or|xor|"
+                       r"not|shl|shr|sal|sar|rol|ror|nop|offset|ptr|lengthof|sizeof|dup|equ|macro|irvine32|dumpregs|"
+                       r"dumpmem|writeint|writedec|writehex|writestring|crlf|readint|exitprocess|invoke|proc|endp|"
+                       r"include|proto|dword|word|byte|sdword|sword|sbyte|end)\b|\.(386|486|586|model|stack|data|code)\b", re.I)
+ASM_LINE = re.compile(r"^\s*(?:[A-Za-z_]\w*:)?\s*[.A-Za-z]{2,9}\b[^\n]*\b(e?[abcd]x|[abcd][lh]|e?[sd]i|e?[sb]p|\d+h?|offset|dword|word|byte)\b|^\s*\.(386|model|stack|data|code)\b|^\s*(include|invoke|call)\b", re.I | re.M)
+
+
+def asm_vocab(t):
+    """Assembly words used on code-looking lines only (prose like 'add the third integer' is ignored)."""
+    return {(w or "." + d).lower() for line in t.splitlines() if ASM_LINE.search(line) for w, d in ASM_WORDS.findall(line)}
+
+
 IDIOMS = {
     "if __name__ == '__main__'": re.compile(r"if\s+__name__\s*=="),
     "argparse / sys.argv": re.compile(r"\b(argparse|sys\.argv)\b"),
@@ -70,6 +84,7 @@ def main():
     lab_imports = {(a or b).split(".")[0] for a, b in IMPORT.findall(tmpl)}
     lab_flags = {f for m in NMAP_FLAG.findall(tmpl) for f in m.split()}
     lab_idioms = {k for k, rx in IDIOMS.items() if rx.search(tmpl)}
+    lab_asm = asm_vocab(tmpl) | {w for w in re.findall(r"\b[a-z]{2,9}\b", tmpl.lower()) if ASM_WORDS.fullmatch(w)}
     # Agents compare explanations against the course material, so keep a cheap text copy.
     with open(os.path.join(W, "lab_reference.txt"), "w") as fh:
         fh.write(tmpl)
@@ -86,7 +101,7 @@ def main():
     for r in man:
         d = os.path.join(W, "extracted", r["participant_id"])
         both = open(os.path.join(d, "text.txt"), errors="replace").read() + "\n" + open(os.path.join(d, "ocr.txt"), errors="replace").read()
-        calls = set(CALL.findall(both)) - lab_calls - allow - NOT_CODE
+        calls = (set(CALL.findall(both)) - lab_calls - allow - NOT_CODE) | {f"asm:{w}" for w in asm_vocab(both) - lab_asm - allow}
         imps = {(x or y).split(".")[0] for x, y in IMPORT.findall(both)} - lab_imports - allow
         idi = {k for k, rx in IDIOMS.items() if k not in lab_idioms and rx.search(both)}
         flags = {f for m in NMAP_FLAG.findall(both) for f in m.split()} - lab_flags - allow
