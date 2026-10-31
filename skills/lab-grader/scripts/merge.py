@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Merge per-student grade JSON files into the final CSVs and flags report.
+"""Merge per-student grade JSON files into the final CSVs.
 
 Usage:
     python3 merge.py <work_dir> [--moodle-worksheet grading_worksheet.csv] [--moodle-scale 10|100]
 
 Reads  <work_dir>/rubric.json, <work_dir>/grades/<pid>.json, manifest.json, similarity.json
 Writes <work_dir>/grades.csv          (UTF-8 with BOM so Excel shows Arabic correctly)
+                                      simple columns first: grade, "Check", "What to do", feedback;
+                                      flagged students at the top; technical columns at the end
        <work_dir>/moodle_import.csv   (fills the Moodle worksheet if given, else a minimal one)
-       <work_dir>/flags.md            (everything the TA must look at by hand)
+
+"Check" / "What to do" come from grades/<pid>.json "ta_check" {"check", "what_to_do"} (written
+by the Sonnet reviewers in plain English); when missing they are derived from the other fields.
 
 Scoring (the script computes this; agents never do the final arithmetic):
     raw_100    = sum(items.awarded) + format.awarded - global deductions          (pure rubric)
@@ -29,6 +33,43 @@ import os
 
 def ceil_half(x):
     return math.ceil(round(x * 2, 6)) / 2
+
+
+
+def short(text, n=220):
+    text = " ".join(str(text).split())
+    if len(text) <= n:
+        return text
+    cut = text[:n]
+    end = max(cut.rfind(". "), cut.rfind("; "))
+    return (cut[:end + 1] if end > 60 else cut.rstrip() + "...")
+
+
+def derive_check(g, row, copy_pairs_real):
+    """Fallback plain-language label + action when no reviewer wrote ta_check."""
+    labels, todo = [], []
+    if row["too_bad"]:
+        labels.append("Too bad"); todo.append(short(row["too_bad"], 140))
+    if row["ai_penalty"]:
+        labels.append("AI proven (-1)")
+    elif row["ai_level"] in ("medium", "high"):
+        labels.append("Maybe AI")
+    for c in copy_pairs_real:
+        labels.append(f"Copy with {c.split('(')[0]}")
+    if (g.get("needs_review") or row["confidence"] == "low") and not labels:
+        labels.append("Check grade"); todo.append(short(g.get("ta_notes", ""), 160))
+    if row["ai_ask_student"] and labels and labels != ["Check grade"]:
+        todo.append("Ask: " + short(row["ai_ask_student"], 160))
+    return (" + ".join(labels) or "OK"), " ".join(t for t in todo if t)
+
+
+def severity(check):
+    c = check.lower()
+    order = [("too bad", 0), ("wrong file", 0), ("proven", 1), ("copy", 2), ("ai", 3), ("check", 4)]
+    for key, sev in order:
+        if key in c:
+            return sev
+    return 9 if c in ("ok", "") else 5
 
 
 def main():
@@ -104,12 +145,13 @@ def main():
         total = max(0.0, min(max_total, curved + bonus - ai_pen + float(adj.get("points", 0))))
         grade = float(adj["target_grade_10"]) if "target_grade_10" in adj else ceil_half(total / 10)
         row = {
-            "participant_id": pid, "name": man[pid]["name"],
+            "participant_id": pid, "name": man[pid]["name"], "grade_10": grade,
+            "Check": "", "What to do": "", "feedback_ar": g.get("feedback_ar", ""),
             **{k: awarded.get(k, 0) for k in item_ids},
             "format": fmt, "deductions": ded, "raw_100": round(raw, 2), "too_bad": g.get("too_bad", {}).get("reason", "") if too_bad else "",
             "curved_100": round(curved, 2), "bonus": bonus, "ai_penalty": ai_pen,
             "ta_adjustment": adj.get("target_grade_10", adj.get("points", "")), "ta_adjustment_reason": adj.get("reason", ""),
-            "total_100": round(total, 2), "grade_10": grade,
+            "total_100": round(total, 2),
             "ai_level": ai.get("level", "none"), "ai_proven": bool(ai.get("proven")),
             "ai_scan_score": ai_scan.get(pid, {}).get("score", ""),
             "ai_note": ai.get("note_for_ta", " | ".join(ai.get("signals", []))),
@@ -118,21 +160,14 @@ def main():
             "auto_flags": " | ".join(man[pid]["flags"]),
             "reviewed_by": g.get("reviewed_by", "worker"), "confidence": g.get("confidence", ""),
             "ta_notes": g.get("ta_notes", ""),
-            "feedback_ar": g.get("feedback_ar", ""),
         }
+        tc = g.get("ta_check") or {}
+        if tc.get("check"):
+            row["Check"], row["What to do"] = tc["check"], tc.get("what_to_do", "")
+        else:
+            row["Check"], row["What to do"] = derive_check(g, row, copy_of.get(pid, []))
         rows.append(row)
-        if row["ai_level"] in ("medium", "high") or row["copy_pairs"] or too_bad or g.get("needs_review") or row["confidence"] == "low":
-            problems.append(
-                f"- **{pid} {row['name']}**: grade {row['grade_10']}/10 (rubric {row['raw_100']} -> curved {row['curved_100']}"
-                + (f", bonus +{bonus}" if bonus else "") + (f", AI penalty -{ai_pen}" if ai_pen else "") + ")"
-                + (f"\n  - **Too bad, not curved**: {row['too_bad']}" if too_bad else "")
-                + (f"\n  - AI **{row['ai_level']}**{' (proven)' if row['ai_proven'] else ''}: {row['ai_note']}" if row["ai_level"] in ("medium", "high") else "")
-                + (f"\n  - Ask the student: {row['ai_ask_student']}" if row["ai_ask_student"] else "")
-                + (f"\n  - Similar to: {row['copy_pairs']}" if row["copy_pairs"] else "")
-                + (f"\n  - Notes: {row['ta_notes']}" if row["ta_notes"] else ""))
-    rows.sort(key=lambda r: r["participant_id"])
-    if G:
-        problems.insert(0, f"Curve: {curve.get('method')} | anchor = genuine attempt #{rank} from the bottom, rubric {lo:.1f} -> {c_lo/10:.1f}/10, 100 -> {c_hi/10:.1f}/10\n")
+    rows.sort(key=lambda r: (severity(r["Check"]), r["participant_id"]))
 
     if rows:
         with open(os.path.join(W, "grades.csv"), "w", newline="", encoding="utf-8-sig") as fh:
@@ -166,17 +201,17 @@ def main():
     dist = {}
     for r in rows:
         dist[r["grade_10"]] = dist.get(r["grade_10"], 0) + 1
-    with open(os.path.join(W, "flags.md"), "w") as fh:
-        fh.write(f"# Grading flags: {rubric.get('assignment', '')}\n\n")
-        fh.write(f"Graded {len(rows)}/{len(man)}. Grade distribution (/10): "
-                 + ", ".join(f"{k}: {v}" for k, v in sorted(dist.items())) + "\n\n")
-        if over_max:
-            fh.write(f"**{len(over_max)} students are above 10/10 because of the bonus.** Moodle rejects grades above the "
-                     "assignment maximum unless the site setting `unlimitedgrades` is on. Raise the max or enter those by hand.\n\n")
-        fh.write("## Needs TA attention\n\n" + ("\n".join(problems) if problems else "Nothing flagged.") + "\n")
-    print(f"grades.csv: {len(rows)} rows | moodle_import.csv | flags.md: {len(problems)} items")
+    flagged = [r for r in rows if severity(r["Check"]) < 9]
+    print(f"grades.csv: {len(rows)}/{len(man)} students, {len(flagged)} to check (at the top) | moodle_import.csv")
+    if G:
+        print(f"Curve: {curve.get('method')} | anchor = genuine attempt #{rank} from the bottom, rubric {lo:.1f} -> {c_lo/10:.1f}/10, 100 -> {c_hi/10:.1f}/10")
+    print("Distribution (/10): " + ", ".join(f"{k}: {v}" for k, v in sorted(dist.items())))
+    if over_max:
+        print(f"{len(over_max)} students above 10/10: raise the Moodle max grade or enable unlimitedgrades.")
+    for p_ in problems:
+        print(p_)
     for r in rows:
-        print(f"{r['participant_id']}  {r['total_100']:6} -> {r['grade_10']:4}  ai={r['ai_level']:<6} copy={r['copy_pairs'] or '-'}  {r['name'][:28]}")
+        print(f"{r['participant_id']}  {r['grade_10']:4}  {r['Check'][:40]:<40}  {r['name'][:28]}")
 
 
 if __name__ == "__main__":

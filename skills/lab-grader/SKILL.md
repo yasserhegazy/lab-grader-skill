@@ -142,7 +142,10 @@ pass it so the import file matches Moodle exactly. Otherwise a minimal
 students at their raw score, adds the bonus, subtracts the AI penalty for `high`+`proven`, and
 honours TA overrides. `grades.csv` shows every step (`raw_100`, `curved_100`, `ai_penalty`, ...).
 
-Tell the TA: where `grades.csv`, `moodle_import.csv` and `flags.md` are; the grade distribution;
+`grades.csv` starts with the simple columns (grade, `Check`, `What to do`, feedback) with
+flagged students at the top; the technical columns follow. There is no separate flags file.
+
+Tell the TA: where `grades.csv` and `moodle_import.csv` are; the grade distribution;
 how many AI/copy flags and the top ones in one line each; and any students above 10/10 (Moodle
 needs the max raised or `unlimitedgrades` for those). Keep it short. The files hold the details.
 

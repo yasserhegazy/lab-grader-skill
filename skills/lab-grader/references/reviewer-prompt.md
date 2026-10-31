@@ -32,4 +32,12 @@ Edit the JSON in place: set `"reviewed_by": "sonnet"`, update `items`/`ai`/`ta_n
 encouraging Palestinian colloquial Arabic the workers use, with technical terms in English, never translated), set `needs_review` false unless the TA personally must decide
 (then explain why in `ta_notes`). Grades are never reduced for AI or copying suspicion.
 
+Also write `"ta_check": {"check": ..., "what_to_do": ...}` for every case:
+This is what the TA reads in `grades.csv`, so keep it simple and non-technical, in plain
+English. `check` is a short label: `OK`, `Too bad`, `Wrong file`, `Copy with <pid>`, `Maybe AI`,
+`AI proven (-1)`, `Check grade`, or two joined with ` + `. `what_to_do` is one or two short
+sentences: what you found in everyday words, where to look (page/screenshot), and what to ask
+the student. A flag you cleared (innocent copy pair, AI signal you rejected) gets `"check": "OK"`
+and a short reason, so the TA isn't sent to look at it.
+
 Reply with one line per case: `<pid> <what changed or "confirmed">`.

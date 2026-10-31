@@ -13,7 +13,7 @@ download, or any folder with one sub-folder per student) and the assignment file
 - **detects copying between students**: identical screenshots, shared MAC addresses / shell
   prompts, matching code, and paraphrased (reworded) reports
 - **writes friendly feedback** per student (Palestinian colloquial Arabic by default)
-- outputs `grades.csv`, a **Moodle import CSV**, and `flags.md` (everything you should look at)
+- outputs `grades.csv` (students to check at the top, with a plain **Check** / **What to do** note) and a **Moodle import CSV**
 
 Grading policy (editable in the rubric): 80 points of work split by task difficulty, 20 points
 of format, up to +10 bonus for an exceptional report (max 11/10). Grades are curved to spread
@@ -104,7 +104,7 @@ The skill walks you through it:
 4. **Full run**: parallel grading of everyone
 5. **Review**: flagged and spot-check cases re-checked by the stronger model
 6. **AI & integrity review**: notes with evidence, "too bad" decisions, proven-AI penalty
-7. **Merge**: curve, bonus, CSVs and the flags report in `<assignment folder>/grading/`
+7. **Merge**: curve, bonus and the CSVs in `<assignment folder>/grading/`
 
 Changing one student afterwards: *"give student 1234567 a 7"*. The skill records it as a TA
 override and re-merges.
@@ -113,9 +113,8 @@ override and re-merges.
 
 | File | What it is |
 |---|---|
-| `grades.csv` | one row per student: every rubric item, raw → curved → bonus → AI penalty → final /10, AI level + note + question to ask, copy pairs, feedback (opens correctly in Excel) |
+| `grades.csv` | one row per student, students to check first. Simple columns first: grade /10, **Check** (`OK`, `Copy with …`, `Maybe AI`, `Too bad`…), **What to do** (plain English: what was found, where, what to ask), feedback. Then every rubric item, raw → curved → bonus → AI penalty, and the detailed notes (opens correctly in Excel) |
 | `moodle_import.csv` | upload via *Assignment → Grading action → Upload grading worksheet* (pass Moodle's own worksheet with `--moodle-worksheet` for an exact match) |
-| `flags.md` | grade distribution and every student that needs a human look |
 | `rubric.json` / `rubric.md` | the approved rubric (reused on re-runs) |
 | `similarity.md`, `ai_scan.json` | raw copy-check and AI-signal results |
 
@@ -145,7 +144,7 @@ skills/lab-grader/
     ├── ai_scan.py              free AI / fabrication / beyond-the-lab scan
     ├── plan.py                 balanced batches, review and AI case lists
     ├── codex_agents.py         parallel `codex exec` launcher (Codex harness)
-    └── merge.py                curve, bonus, penalties → CSVs + flags report
+    └── merge.py                curve, bonus, penalties → grades.csv + Moodle CSV
 ```
 
 ## License
