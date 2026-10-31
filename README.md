@@ -104,7 +104,11 @@ The skill walks you through it:
 3. **Pilot**: 5 random students graded; you check the grades and feedback
 4. **Full run**: parallel grading of everyone
 5. **Review**: flagged and spot-check cases re-checked by the stronger model
-6. **AI & integrity review**: notes with evidence, "too bad" decisions, proven-AI penalty
+6. **AI & integrity review**: notes with evidence, "too bad" decisions, proven-AI penalty;
+   copy pairs rated *strong* (2+ independent signs) / *possible* / *cleared*, an **evidence page**
+   per pair (identical screenshots side by side, matching sentences, upload times), and an
+   independent **second opinion** for every serious case: strong copy or proven AI only stands
+   when both reviewers agree
 7. **Merge**: curve, bonus, late penalty and the CSVs in `<assignment folder>/grading/`
 8. **Fill Moodle** (only when you ask): open the Submissions page with Quick grading on and
    all students on one page, send the link and confirm the grades are final. The agent fills
@@ -119,6 +123,7 @@ override and re-merges.
 | File | What it is |
 |---|---|
 | `grades.csv` | simple, one row per student, students to check first: participant id, **university id**, name, grade /10, **Check** (`OK`, `Copy with …`, `Maybe AI`, `Too bad`…), **What to do** (plain English: what was found, where, what to ask), feedback, item points, format, bonus, deductions, raw → curved → total (opens correctly in Excel). Detailed notes stay in `grades/<pid>.json` |
+| `evidence/<a>_<b>.html` | one page per suspected copy pair: screenshots side by side, matching sentences, both reviewers' verdicts. Open from the `grading/` folder |
 | `moodle_fill.js` | made by `scripts/moodle_fill.py` when you ask to fill Moodle: fills the quick-grading page by university ID, never saves |
 | `moodle_import.csv` | if your Moodle has it, upload via *Assignment → Grading action → Upload grading worksheet* (pass Moodle's own worksheet with `--moodle-worksheet` for an exact match) |
 | `rubric.json` / `rubric.md` | the approved rubric (reused on re-runs) |
@@ -150,6 +155,7 @@ skills/lab-grader/
     ├── ai_scan.py              free AI / fabrication / beyond-the-lab scan
     ├── plan.py                 balanced batches, review and AI case lists
     ├── codex_agents.py         parallel `codex exec` launcher (Codex harness)
+    ├── evidence.py             evidence page per suspected copy pair
     ├── merge.py                curve, bonus, penalties → grades.csv + Moodle CSV
     └── moodle_fill.py          browser script that fills Moodle's quick-grading page
 ```

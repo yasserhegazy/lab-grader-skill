@@ -130,6 +130,26 @@ Spawn Sonnet with `references/ai-reviewer-prompt.md` for the students in `ai_cas
 compares answers against the lab, decides `level` / `proven` / `too_bad`, and writes
 `note_for_ta` + `ask_student`. This step decides who is too bad, so run it before the final merge.
 
+## Phase 5c: Evidence pages + second opinion (serious cases only)
+
+```bash
+python3 SKILL_DIR/scripts/evidence.py "$WORK"         # -> evidence/<a>_<b>.html per copy pair
+python3 SKILL_DIR/scripts/plan.py "$WORK" second      # -> second_cases.json
+```
+
+Copy pairs are rated `strong` (2+ independent signs: identical screenshots, identical random
+values such as memory addresses / MACs / clock times, the same typo, linked file metadata),
+`possible` (one sign) or `cleared`. For every case in `second_cases.json` (strong copy, AI high
+or proven), spawn **one** Sonnet with `references/second-opinion-prompt.md`; it decides without
+reading the first verdict. `merge.py` keeps `strong` / `proven` only when both reviewers agree,
+otherwise shows `possible` / not proven, and warns about serious cases with no second opinion.
+
+**How flagged students are told (the TA works online and cannot meet students):** the Moodle
+comment never mentions copying or AI. Copy and AI flags are warnings for the TA, never a
+deduction by themselves: the TA checks the evidence page and decides per case, then records it
+as `ta_adjustment` (with the reason) and the feedback for that student is rewritten to state
+the decision kindly and factually.
+
 ## Phase 6: Merge and report
 
 ```bash

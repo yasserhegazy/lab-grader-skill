@@ -55,6 +55,27 @@ Set `too_bad.is = true` only if one applies:
 Too-bad students are not lifted by the 6–10 curve, so they can end below 5. Everyone with a
 genuine attempt, however weak, is not too-bad.
 
+## 4b. Copy pairs: strong, possible or cleared
+
+For every copy pair this student is in (see `similarity.md`), open both students side by side and
+decide one level. Count only **independent signs** that two people working alone would not produce:
+
+- identical screenshots (same pixels, same window layout and crop)
+- identical random values: memory addresses / ESP / EIP, MAC addresses, process ids, clock times,
+  timestamps, temp file names
+- identical unusual text: the same typo, odd phrasing or wrong statement
+- identical code oddities: same unusual variable names, comments or mistakes
+- linked files: same document author / creation time, or one file's leftovers inside the other
+
+Never signs: the assignment's suggested values, the assignment's own wording, the same IDE or
+default layout, the lab template code.
+
+- `strong`: **two or more** independent signs, each quoted with where to see it (page / image).
+- `possible`: exactly one sign.
+- `cleared`: only innocent matches.
+
+Say who probably copied from whom only when the upload times or files show it, and say "unclear" otherwise.
+
 ## 5. Write it into `grades/<pid>.json`
 
 Add or replace these fields. Don't change item points unless a scan signal shows a
@@ -70,6 +91,7 @@ rubric deduction was clearly missed or wrongly applied (then say so in `ta_notes
   "ask_student": "one or two concrete questions that a student who did the work can answer easily, e.g. 'Show me port_check.py running on your VM' or 'Why did you use errno.errorcode, and what does it return for 111?'"
 },
 "too_bad": {"is": false, "reason": ""},
+"copy": [{"with": "1234568", "level": "strong", "signs": ["same EIP=007A1025 on the DX capture (img_09 / img_08)", "same typo 'abx = eax + ...' in captions p.3 / p.4"], "direction": "unclear"}],
 "ta_check": {"check": "Copy with 1234568", "what_to_do": "Same screenshots and same typo as 1234568. Ask both to run Exercise 2 in front of you."},
 "reviewed_by": "sonnet"
 ```
@@ -78,7 +100,8 @@ rubric deduction was clearly missed or wrongly applied (then say so in `ta_notes
 English. `check` is a short label: `OK`, `Too bad`, `Wrong file`, `Copy with <pid>`, `Maybe AI`,
 `AI proven (-1)`, `Check grade`, or two joined with ` + `. `what_to_do` is one or two short
 sentences: what you found in everyday words, where to look (page/screenshot), and what to ask
-the student. A flag you cleared (innocent copy pair, AI signal you rejected) gets `"check": "OK"`
+the student. Copy labels say the level: `Copy (strong) with <pid>` or `Copy (possible) with <pid>`. A flag you
+cleared (innocent copy pair, AI signal you rejected) gets `"check": "OK"`
 and a short reason, so the TA isn't sent to look at it.
 
 Never mention AI suspicion in `feedback_ar`.

@@ -7,6 +7,9 @@ Usage:
     python3 plan.py <work_dir> ai
         -> students for the Sonnet AI/integrity reviewer: ai_scan score >= 2, worker AI
            medium/high, copy pairs, too-bad candidates (flag or raw rubric < 50) -> ai_cases.json
+    python3 plan.py <work_dir> second
+        -> serious cases for an independent second opinion (after the AI review): a copy verdict
+           "strong", or AI "high" / proven -> second_cases.json. Both students of a pair are listed.
     python3 plan.py <work_dir> review
         -> reads grades/*.json + batches.json, writes <work_dir>/review_cases.json
            (AI medium/high, needs_review/low confidence, script-generated/not-PDF/
@@ -103,15 +106,31 @@ def ai_cases(W):
     print(f"{len(cases)} students -> ai_cases.json\n" + ", ".join(cases))
 
 
+def second_cases(W):
+    cases = []
+    for f in sorted(os.listdir(os.path.join(W, "grades"))):
+        pid = f[:-5]
+        g = json.load(open(os.path.join(W, "grades", f)))
+        ai = g.get("ai", {})
+        strong = [str(c.get("with")) for c in g.get("copy", []) or [] if c.get("level") == "strong"]
+        if strong or ai.get("level") == "high" or ai.get("proven"):
+            for p in [pid] + strong:
+                if p not in cases:
+                    cases.append(p)
+    json.dump(cases, open(os.path.join(W, "second_cases.json"), "w"))
+    print(f"{len(cases)} students -> second_cases.json\n" + ", ".join(cases))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("work_dir")
-    ap.add_argument("mode", choices=["batches", "review", "ai"])
+    ap.add_argument("mode", choices=["batches", "review", "ai", "second"])
     ap.add_argument("--size", type=int, default=6)
     ap.add_argument("--exclude", nargs="*", default=[])
     a = ap.parse_args()
     {"batches": lambda: batches(a.work_dir, a.size, set(a.exclude)),
-     "review": lambda: review(a.work_dir), "ai": lambda: ai_cases(a.work_dir)}[a.mode]()
+     "review": lambda: review(a.work_dir), "ai": lambda: ai_cases(a.work_dir),
+     "second": lambda: second_cases(a.work_dir)}[a.mode]()
 
 
 if __name__ == "__main__":

@@ -196,7 +196,17 @@ def main():
             curved = c_lo + (c_hi - c_lo) * max(0.0, raw - lo) / (100 - lo)
         bonus = min(float(g.get("bonus", {}).get("awarded", 0)), rubric["bonus"]["max"])
         ai = g.get("ai", {})
-        ai_pen = ai_pen_pts if ai.get("level") == "high" and ai.get("proven") else 0.0
+        # A serious verdict needs two independent reviewers: a second opinion that disagrees
+        # cancels "proven" (no penalty); a missing second opinion is warned about.
+        so = g.get("second_opinion") or {}
+        proven = bool(ai.get("level") == "high" and ai.get("proven"))
+        proven_note = ""
+        if proven and so and not so.get("ai_proven"):
+            proven, proven_note = False, "Second reviewer did not confirm the AI proof, so no AI penalty. "
+        elif proven and not so:
+            problems.append(f"- {pid}: AI proven without a second opinion (run plan.py second)")
+            proven_note = "AI proof not double-checked by a second reviewer. "
+        ai_pen = ai_pen_pts if proven else 0.0
         adj = g.get("ta_adjustment", {})
         total = max(0.0, min(max_total, curved + bonus - ai_pen + float(adj.get("points", 0))))
         late_h, late_pen = late_penalty(rubric, man[pid].get("submitted_at", ""))
@@ -219,6 +229,24 @@ def main():
             row["Check"], row["What to do"] = tc["check"], tc.get("what_to_do", "")
         else:
             row["Check"], row["What to do"] = derive_check(g, {**row, **info}, copy_of.get(pid, []))
+        if proven_note:
+            row["What to do"] = (proven_note + row["What to do"]).strip()
+        # copy pairs: "strong" only when the second reviewer agrees; link the evidence page
+        so_copy = {str(c.get("with")): c.get("level") for c in so.get("copy", []) or []}
+        for c in g.get("copy", []) or []:
+            other = str(c.get("with"))
+            if c.get("level") == "strong" and so and so_copy.get(other) != "strong":
+                row["Check"] = row["Check"].replace(f"Copy (strong) with {other}", f"Copy (possible) with {other}")
+                row["What to do"] = (f"Second reviewer rated the copy with {other} as "
+                                     f"'{so_copy.get(other, 'not checked')}', so it is shown as possible. " + row["What to do"]).strip()
+            elif c.get("level") == "strong" and not so:
+                problems.append(f"- {pid}: strong copy with {other} without a second opinion (run plan.py second)")
+            if c.get("level") in ("strong", "possible"):
+                a_, b_ = sorted([pid, other])
+                ev = os.path.join("evidence", f"{a_}_{b_}.html")
+                if os.path.exists(os.path.join(W, ev)):
+                    row["What to do"] += f" Evidence: {ev}."
+                row["What to do"] += " Not verified: no deduction unless you decide."
         if late_pen:
             row["Check"] = (f"Late (-{late_pen / 10:g})" if row["Check"] == "OK"
                             else f"{row['Check']} + Late (-{late_pen / 10:g})")
