@@ -150,6 +150,14 @@ deduction by themselves: the TA checks the evidence page and decides per case, t
 as `ta_adjustment` (with the reason) and the feedback for that student is rewritten to state
 the decision kindly and factually.
 
+## Phase 5d: Comments in the TA's voice
+
+All `feedback_ar` must follow `references/feedback-style.md` (the TA's real Moodle comments:
+first name, short, one praise + one tip). After the TA decides copy/AI/wrong-file cases, rewrite
+those students' comments to state the decision openly in that style (e.g. «خصمت 3 علامات لأنو
+الحل منقول بينك وبين ...»). Don't add the late note yourself; `merge.py` appends it. If the TA
+has graded an earlier assignment on Moodle, read those comments first and match them.
+
 ## Phase 6: Merge and report
 
 ```bash

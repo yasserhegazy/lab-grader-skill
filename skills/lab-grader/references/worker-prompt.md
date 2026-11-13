@@ -45,7 +45,7 @@ For each student, the files are in `{WORK_DIR}/extracted/<pid>/`:
    empty, set `too_bad_candidate: true` with the reason (a Sonnet reviewer decides).
 6. Note anything odd in `ta_notes` (wrong assignment file, unreadable screenshots, different
    host between tasks, a file that looks like another lab).
-7. Write **short** feedback (1–2 sentences, max ~30 words) in **Palestinian colloquial Arabic
+7. **First read `{SKILL_DIR}/references/feedback-style.md` (the TA's real comments) and write in exactly that voice: start with the student's first name («يعطيك العافية يا ...»).** Write **short** feedback (1–2 sentences, max ~30 words) in **Palestinian colloquial Arabic
    (عامية فلسطينية)**, like a friendly TA cheering the student on: one real, specific praise,
    at most one small tip for next time, and a warm cheer-up ending. Light and positive, never
    a list of mistakes (the points breakdown already shows those).
