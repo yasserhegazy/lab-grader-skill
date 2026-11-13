@@ -156,7 +156,7 @@ def flags_from_meta(meta, fname):
     blob = " ".join(str(meta.get(k, "")) for k in ("creator", "producer", "author", "lastModifiedBy", "Application")).lower()
     for g in SCRIPT_GENERATORS:
         if g in blob:
-            flags.append(f"META_SCRIPT_GENERATED:{g} (document produced by a program, typical of AI-chat-generated reports)")
+            flags.append(f"META_SCRIPT_GENERATED:{g} (document produced by a program; styling only, not an AI signal)")
     if any(b in blob for b in BROWSER_PRINT):
         flags.append("META_BROWSER_PRINT (printed from a browser: Google Docs, web page or AI chat; weak signal alone)")
     tt = meta.get("TotalTime")

@@ -125,7 +125,7 @@ def main():
 
         for f in r["flags"]:
             if f.startswith("META_SCRIPT_GENERATED"):
-                add("script-generated file", 3, f.split(" (")[0])
+                add("script-generated file (styling only, TA allows; not counted)", 0, f.split(" (")[0])
             elif f.startswith("META_DOCX_EDIT_TIME"):
                 add("document edited for almost no time", 2, f.split(" (")[0])
             elif f.startswith("META_BROWSER_PRINT"):

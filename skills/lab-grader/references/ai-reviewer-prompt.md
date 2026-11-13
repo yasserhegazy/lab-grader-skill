@@ -42,6 +42,8 @@ what it is and quote it.
   ("from the user's screenshot", "Replace this placeholder", `[INSERT SCREENSHOT HERE]`),
   or code in the report that cannot produce the screenshot output. Polished wording,
   script-generated metadata or outside-the-lab code alone are **not** proof.
+  Using AI only to
+  design/style the file is allowed by the TA: if that is all you find, set level `none`.
   `high` + `proven` costs the student a fixed penalty (set in the rubric), so be sure.
 
 ## 4. Decide too-bad

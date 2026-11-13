@@ -213,8 +213,9 @@ Never fill Moodle on your own initiative. When the TA asks to put the grades in 
 - Most real AI evidence is **inconsistency**: numbers in the text that differ from the student's
   own screenshot, leftover placeholders (`[INSERT VERSION]`, `[ INSERT SCREENSHOT HERE ]`),
   the assignment's example IPs with screenshots showing another network, or printed code that
-  doesn't match the program that ran. Script-generated metadata (python-docx/reportlab) is a
-  strong pointer, not proof.
+  doesn't match the program that ran. Script-generated metadata (python-docx/reportlab) and
+  polished design are **not** AI signals: the TA allows AI for styling/designing the file. Flag
+  only content that isn't the student's own.
 - Step-by-step trace assignments (assembly, debugger) can have 50+ screenshots. The extractor
   keeps up to `--max-images` (default 150) and flags `IMAGES_TRUNCATED` when it hits the cap;
   re-extract those students with a higher cap before grading, or the last pages (often the
