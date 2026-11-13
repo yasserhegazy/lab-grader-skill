@@ -30,7 +30,7 @@ any student is graded. Cheap agents then apply it mechanically.
 - **Maximum = Moodle's maximum grade. Always ask the TA, never assume** (it can be 10, 11 or
   something else). Put it in `moodle_max_grade`; `merge.py` caps every grade to it, and the bonus
   only helps up to that cap.
-- **Final grade /10 = total/10 rounded UP to the next 0.5** (done by `merge.py`, not by agents).
+- **Final grade /10 = total/10 rounded UP to the next whole grade** (9.5 -> 10; no half grades) (done by `merge.py`, not by agents).
 - **Be kind.** Partial work earns partial credit. A missing screenshot but clear text output
   loses part of the evidence points, not the whole task. A wrong explanation loses the
   explanation points, not the command points. Small slips (typo in a heading, slightly

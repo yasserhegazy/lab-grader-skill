@@ -1,6 +1,6 @@
 ---
 name: lab-grader
-description: "Grade a folder of student lab/assignment submissions (PDF, DOCX, code, zip; Moodle download folders) against the assignment file. It builds a rubric for TA approval, grades /10 in 0.5 steps (spread 6-10, below 5 only for too-bad work, format bonus up to 11/10), detects AI-written reports, answers beyond what the lab taught, and copying/paraphrasing between students with detailed notes, and writes friendly Palestinian-Arabic feedback plus grades.csv / Moodle import CSV. Cost-efficient: local scripts do extraction/OCR/similarity, cheap Haiku agents grade in parallel batches, Sonnet reviews only flagged cases. Use this whenever the user (a TA/instructor) wants to grade, mark, evaluate, check or correct submissions, homework, labs, or assignments, or check for cheating, plagiarism or AI use in student work, even if they don't say \"grade\"."
+description: "Grade a folder of student lab/assignment submissions (PDF, DOCX, code, zip; Moodle download folders) against the assignment file. It builds a rubric for TA approval, grades /10 in whole numbers (spread 6-10, below 5 only for too-bad work, format bonus up to 11/10), detects AI-written reports, answers beyond what the lab taught, and copying/paraphrasing between students with detailed notes, and writes friendly Palestinian-Arabic feedback plus grades.csv / Moodle import CSV. Cost-efficient: local scripts do extraction/OCR/similarity, cheap Haiku agents grade in parallel batches, Sonnet reviews only flagged cases. Use this whenever the user (a TA/instructor) wants to grade, mark, evaluate, check or correct submissions, homework, labs, or assignments, or check for cheating, plagiarism or AI use in student work, even if they don't say \"grade\"."
 ---
 
 # Lab grader
@@ -66,7 +66,7 @@ that blocks grading.
 Read `references/rubric-guide.md`, then read the assignment fully. Write `$WORK/rubric.json`
 and `$WORK/rubric.md` following the TA's fixed policy in that guide (80 work by difficulty /
 20 format / bonus up to +10 / checklist deductions from the assignment's own rules / curve
-6–10 / too-bad rule / AI penalty / late penalty / `lab_allowlist` / round up to 0.5). Ask the TA
+6–10 / too-bad rule / AI penalty / late penalty / `lab_allowlist` / round up to a whole grade). Ask the TA
 for the **due date** and **Moodle's maximum grade** (`deadline`, `moodle_max_grade`); never assume
 the maximum: it differs between assignments. Show the TA the rubric as a compact table and **stop for approval**. Grades built on
 an unapproved rubric are wasted tokens. If `rubric.json` already exists and was approved

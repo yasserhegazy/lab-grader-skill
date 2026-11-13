@@ -24,7 +24,7 @@ Scoring (the script computes this; agents never do the final arithmetic):
                  rubric "deadline" (local time, e.g. "2026-10-24T00:00") vs manifest submitted_at
                  (upload time kept in the Moodle zip); rubric "late_penalty" default
                  [{"max_hours": 24, "points": 10}, {"max_hours": null, "points": 20}] = -1 / -2 grades
-    grade_10   = total_100 / 10 rounded UP to the next 0.5   (87 -> 9.0, 81 -> 8.5, 80 -> 8.0)
+    grade_10   = total_100 / 10 rounded UP to the next whole grade (87 -> 9, 81 -> 9, 80 -> 8); rubric "round_step" overrides (default 1)
                  ta_adjustment.target_grade_10, if set, replaces it (TA's final word).
 """
 import argparse
@@ -211,7 +211,7 @@ def main():
         total = max(0.0, min(max_total, curved + bonus - ai_pen + float(adj.get("points", 0))))
         late_h, late_pen = late_penalty(rubric, man[pid].get("submitted_at", ""))
         total = max(0.0, total - late_pen)
-        grade = float(adj["target_grade_10"]) if "target_grade_10" in adj else ceil_half(total / 10)
+        grade = float(adj["target_grade_10"]) if "target_grade_10" in adj else math.ceil(round(total / 10 / float(rubric.get("round_step", 1)), 6)) * float(rubric.get("round_step", 1))
         sid = find_student_id(W, pid, man[pid].get("files", []), id_re)
         row = {
             "participant_id": pid, "student_id": sid, "name": man[pid]["name"], "grade_10": grade,
